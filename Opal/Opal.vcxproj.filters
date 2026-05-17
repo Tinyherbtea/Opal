@@ -4,6 +4,9 @@
     <Filter Include="Opal">
       <UniqueIdentifier>{D14A8A7C-BD81-8B0D-666E-71105284070F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Opal\Events">
+      <UniqueIdentifier>{95810772-0137-8067-8A2B-7A3EF6DF766B}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Opal.h" />
@@ -15,6 +18,18 @@
     </ClInclude>
     <ClInclude Include="src\Opal\Entrypoint.h">
       <Filter>Opal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\Events\ApplicationEvent.h">
+      <Filter>Opal\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\Events\Event.h">
+      <Filter>Opal\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\Events\KeyEvent.h">
+      <Filter>Opal\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\Events\MouseEvent.h">
+      <Filter>Opal\Events</Filter>
     </ClInclude>
     <ClInclude Include="src\Opal\Log.h">
       <Filter>Opal</Filter>

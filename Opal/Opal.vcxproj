@@ -153,6 +153,10 @@
     <ClInclude Include="src\Opal\Application.h" />
     <ClInclude Include="src\Opal\Core.h" />
     <ClInclude Include="src\Opal\Entrypoint.h" />
+    <ClInclude Include="src\Opal\Events\ApplicationEvent.h" />
+    <ClInclude Include="src\Opal\Events\Event.h" />
+    <ClInclude Include="src\Opal\Events\KeyEvent.h" />
+    <ClInclude Include="src\Opal\Events\MouseEvent.h" />
     <ClInclude Include="src\Opal\Log.h" />
     <ClInclude Include="src\Opal\OpalLog.h" />
   </ItemGroup>
