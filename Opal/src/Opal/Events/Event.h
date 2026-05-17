@@ -1,9 +1,7 @@
 #pragma once
+#include"opalpch.h"
+#include"Opal/Core.h"
 
-#include"../Core.h"
-
-#include<string>
-#include<functional>
 namespace Opal
 {
 	enum class EventType

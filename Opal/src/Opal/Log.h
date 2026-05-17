@@ -1,4 +1,5 @@
 #pragma once
+
 #include"OpalLog.h"
 #include"Core.h"
 

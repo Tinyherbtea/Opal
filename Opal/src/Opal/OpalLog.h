@@ -1,15 +1,5 @@
 #pragma once
-#include<string>
-#include<sstream>
-#include<fstream>
-#include<iostream>
-#include<vector>
-#include<thread>
-#include<memory>
-#include<chrono>
-#include<atomic>
-#include <utility>
-#include<mutex>
+#include"opalpch.h"
 
 #ifdef OPALLOG_EXPORTS
 #define OPALLOG_API __declspec(dllexport)

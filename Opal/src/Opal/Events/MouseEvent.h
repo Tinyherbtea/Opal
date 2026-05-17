@@ -1,7 +1,5 @@
 #pragma once
-#pragma once
 
-#include<sstream>
 #include "Event.h"
 
 namespace Opal {

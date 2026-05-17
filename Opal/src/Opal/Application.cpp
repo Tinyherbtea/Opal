@@ -1,3 +1,4 @@
+#include"opalpch.h"
 #include"Application.h"
 namespace Opal
 {

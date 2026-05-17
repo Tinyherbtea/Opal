@@ -18,6 +18,9 @@ project "Opal"
 	targetdir ("bin/"..outputdir .."/%{prj.name}")
 	objdir ("bin-intermediate/"..outputdir .."/%{prj.name}")
 
+	pchheader "opalpch.h"
+	pchsource "Opal/src/opalpch.cpp"
+
 	files
 	{
 		"%{prj.name}/src/**.h",
@@ -25,7 +28,7 @@ project "Opal"
 	}
 	includedirs
 	{
-
+		"%{prj.name}/src"
 	}
 
 	filter "system:windows"

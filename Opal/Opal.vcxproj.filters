@@ -37,6 +37,7 @@
     <ClInclude Include="src\Opal\OpalLog.h">
       <Filter>Opal</Filter>
     </ClInclude>
+    <ClInclude Include="src\opalpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Opal\Application.cpp">
@@ -48,5 +49,6 @@
     <ClCompile Include="src\Opal\OpalLog.cpp">
       <Filter>Opal</Filter>
     </ClCompile>
+    <ClCompile Include="src\opalpch.cpp" />
   </ItemGroup>
 </Project>
