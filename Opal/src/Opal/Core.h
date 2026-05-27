@@ -10,4 +10,12 @@
 #error Engine only support Windows!
 #endif
 
+#ifdef OPAL_ENABLE_ASSERTS//╤оят
+	#define OPAL_ASSERT(x,...) {if(!(x)){OPAL_ERROR("Assertion Failed: {0}",__VA_ARGS__);__debugbreak();}}
+	#define OPAL_CORE_ASSERT(x,...){if(!(x)){OPAL_CORE_ERROR("Assertion Failed: {0}",__VA_ARGS__);__debugbreak();}} 
+#else
+	#define OPAL_ASSERT(x, ...)
+	#define OPAL_CORE_ASSERT(x, ...)
+#endif
+
 #define BIT(x)(1<<x)

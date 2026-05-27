@@ -10,6 +10,11 @@ workspace "Opal"
 
 outputdir ="%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+--包括相对于根文件夹（解决方案文件夹）的目录路径
+IncludeDir = {}
+IncludeDir["GLFW"] = "Opal/vendor/GLFW/include"
+include "Opal/vendor/GLFW"
+
 project "Opal"
 	location "Opal"
 	kind "SharedLib"
@@ -28,7 +33,13 @@ project "Opal"
 	}
 	includedirs
 	{
-		"%{prj.name}/src"
+		"%{prj.name}/src",
+		"%{IncludeDir.GLFW}"
+	}
+	links
+	{
+		"GLFW",
+		"opengl32.lib"
 	}
 
 	filter "system:windows"
@@ -45,7 +56,7 @@ project "Opal"
 	
 	postbuildcommands
 	{
-		("xcopy /Q /E /Y /I ..\\bin\\" .. outputdir .. "\\Opal\\*.dll ..\\bin\\" .. outputdir .. "\\Sandbox > nul")
+		 ("{COPY} %{cfg.targetdir}/Opal.dll ..\\bin\\" .. outputdir .. "\\Sandbox/")
 	}
 
 	filter "configurations:Debug"

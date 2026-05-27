@@ -1,5 +1,8 @@
 #pragma once
 #include"Core.h"
+#include"Events/Event.h"
+#include"Window.h"
+
 namespace Opal
 {
 	class OPAL_API Application
@@ -10,6 +13,9 @@ namespace Opal
 
 		void Run();
 
+	private:
+		std::unique_ptr<Window> m_Window;
+		bool m_Running = true;
 	};
 	//该函数由客户端实现
 	Application* CreateApplication();
