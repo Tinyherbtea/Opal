@@ -80,7 +80,7 @@
       <PrecompiledHeaderFile>opalpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>OPALLOG_EXPORTS;OPAL_PLATFORM_WINDOWS;OPAL_BUILD_DLL;OPAL_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -105,7 +105,7 @@
       <PrecompiledHeaderFile>opalpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>OPALLOG_EXPORTS;OPAL_PLATFORM_WINDOWS;OPAL_BUILD_DLL;OPAL_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -134,7 +134,7 @@
       <PrecompiledHeaderFile>opalpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>OPALLOG_EXPORTS;OPAL_PLATFORM_WINDOWS;OPAL_BUILD_DLL;OPAL_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -166,6 +166,7 @@
     <ClInclude Include="src\Opal\Events\Event.h" />
     <ClInclude Include="src\Opal\Events\KeyEvent.h" />
     <ClInclude Include="src\Opal\Events\MouseEvent.h" />
+    <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\gllib.h" />
     <ClInclude Include="src\Opal\Log.h" />
     <ClInclude Include="src\Opal\OpalLog.h" />
     <ClInclude Include="src\Opal\Platform\Windows\WindowsWindow.h" />
@@ -180,11 +181,6 @@
     <ClCompile Include="src\opalpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="vendor\GLFW\GLFW.vcxproj">
-      <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

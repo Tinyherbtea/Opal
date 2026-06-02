@@ -50,6 +50,7 @@
       <Filter>Opal</Filter>
     </ClInclude>
     <ClInclude Include="src\opalpch.h" />
+    <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\gllib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Opal\Application.cpp">

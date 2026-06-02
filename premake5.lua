@@ -11,9 +11,9 @@ workspace "Opal"
 outputdir ="%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 --包括相对于根文件夹（解决方案文件夹）的目录路径
-IncludeDir = {}
-IncludeDir["GLFW"] = "Opal/vendor/GLFW/include"
-include "Opal/vendor/GLFW"
+--IncludeDir = {}
+--IncludeDir["GLFW"] = "Opal/vendor/GLFW/include"
+--include "Opal/vendor/GLFW"
 
 project "Opal"
 	location "Opal"
@@ -34,11 +34,11 @@ project "Opal"
 	includedirs
 	{
 		"%{prj.name}/src",
-		"%{IncludeDir.GLFW}"
+		--"%{IncludeDir.GLFW}"
 	}
 	links
 	{
-		"GLFW",
+		--"GLFW",
 		"opengl32.lib"
 	}
 
