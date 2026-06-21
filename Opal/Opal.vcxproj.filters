@@ -7,6 +7,21 @@
     <Filter Include="Opal\Events">
       <UniqueIdentifier>{95810772-0137-8067-8A2B-7A3EF6DF766B}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Opal\GraphicsAPI">
+      <UniqueIdentifier>{AB0BC368-9704-E2BA-C036-C73FAC8EC1C6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Opal\GraphicsAPI\OpenGL">
+      <UniqueIdentifier>{7F86DE15-EBBD-26AD-F4C7-8AD0607E4DA6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Opal\GraphicsAPI\OpenGL\opalgl">
+      <UniqueIdentifier>{2DE933E7-190F-FE4D-0255-8319EE19231A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Opal\GraphicsAPI\OpenGL\opalgl\include">
+      <UniqueIdentifier>{A0ED7921-8C3F-5111-755E-8E21614F6AFA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Opal\GraphicsAPI\OpenGL\opalgl\src">
+      <UniqueIdentifier>{C4754AC4-B0B1-4D2E-19C4-6525051FF648}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Opal\Platform">
       <UniqueIdentifier>{45420C2E-B102-8864-7A3D-D1E1E6BCCC40}</UniqueIdentifier>
     </Filter>
@@ -37,6 +52,9 @@
     <ClInclude Include="src\Opal\Events\MouseEvent.h">
       <Filter>Opal\Events</Filter>
     </ClInclude>
+    <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\opalgl\include\opalgl.h">
+      <Filter>Opal\GraphicsAPI\OpenGL\opalgl\include</Filter>
+    </ClInclude>
     <ClInclude Include="src\Opal\Log.h">
       <Filter>Opal</Filter>
     </ClInclude>
@@ -50,11 +68,16 @@
       <Filter>Opal</Filter>
     </ClInclude>
     <ClInclude Include="src\opalpch.h" />
-    <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\gllib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Opal\Application.cpp">
       <Filter>Opal</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\GLFL.cpp">
+      <Filter>Opal\GraphicsAPI\OpenGL\opalgl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\window_win.cpp">
+      <Filter>Opal\GraphicsAPI\OpenGL\opalgl\src</Filter>
     </ClCompile>
     <ClCompile Include="src\Opal\Log.cpp">
       <Filter>Opal</Filter>

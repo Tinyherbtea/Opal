@@ -224,10 +224,7 @@ namespace OpalLog
 			std::tm tm;
 			localtime_s(&tm, &time);//将time_t类型转换为tm结构体，包含年月日时分秒等信息
 			//-------------------------------以字符串方式获取格式-----------------------------------
-			size_t size = snprintf(nullptr, 0, format.c_str(), std::forward<Args>(args)...) + 1;//通过snprintf的返回值获取格式化字符串的长度
-			std::unique_ptr<char> buffer(new char[size]);										 //创建一个智能指针来管理格式化字符串的内存
-			snprintf(buffer.get(), size, format.c_str(), std::forward<Args>(args)...);			 //将格式化字符串写入缓冲区
-			std::string message(buffer.get(), buffer.get() + size - 1);						 //将格式化字符串转换为std::string对象
+			std::string message = argsformat(format,std::forward<Args>(args)...);						 //将格式化字符串转换为std::string对象
 			//---------------------------------------------------------------------------------------
 			std::stringstream ss;
 			char placeholder;
@@ -328,6 +325,35 @@ namespace OpalLog
 			default:
 				return"";
 			}
+		}
+		inline std::string argsformat(const std::string& format)
+		{
+			return format;
+		}
+		template <typename T, typename... Args>
+		std::string argsformat(const std::string& format, T&& value, Args&&... args)
+		{
+			size_t pos = format.find("{}");
+
+			// 将当前参数 value 转换为字符串
+			std::string value_str;
+			if constexpr (std::is_same_v<std::decay_t<T>, std::string> ||
+				std::is_same_v<std::decay_t<T>, const char*>) {
+				value_str = std::forward<T>(value); // 字符串类型直接赋值
+			}
+			else {
+				value_str = std::to_string(std::forward<T>(value)); // 数值类型转为字符串
+			}
+
+			if (pos == std::string::npos)
+			{
+				return format + value_str + argsformat("", std::forward<Args>(args)...);
+			}
+			std::string result = format.substr(0, pos) + value_str;
+
+			result += argsformat(format.substr(pos + 2), std::forward<Args>(args)...);
+
+			return result;
 		}
 	};
 	class  LogRegister

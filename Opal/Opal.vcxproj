@@ -166,7 +166,7 @@
     <ClInclude Include="src\Opal\Events\Event.h" />
     <ClInclude Include="src\Opal\Events\KeyEvent.h" />
     <ClInclude Include="src\Opal\Events\MouseEvent.h" />
-    <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\gllib.h" />
+    <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\opalgl\include\opalgl.h" />
     <ClInclude Include="src\Opal\Log.h" />
     <ClInclude Include="src\Opal\OpalLog.h" />
     <ClInclude Include="src\Opal\Platform\Windows\WindowsWindow.h" />
@@ -175,6 +175,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Opal\Application.cpp" />
+    <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\GLFL.cpp" />
+    <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\window_win.cpp" />
     <ClCompile Include="src\Opal\Log.cpp" />
     <ClCompile Include="src\Opal\OpalLog.cpp" />
     <ClCompile Include="src\Opal\Platform\Windows\WindowsWindow.cpp" />

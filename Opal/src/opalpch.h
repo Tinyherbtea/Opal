@@ -18,6 +18,7 @@
 #include<unordered_set>
 
 #include"Opal/Log.h"
+#include"Opal/GraphicsAPI/OpenGL/opalgl/include/opalgl.h"
 
 #ifdef OPAL_PLATFORM_WINDOWS
 #include<Windows.h>
