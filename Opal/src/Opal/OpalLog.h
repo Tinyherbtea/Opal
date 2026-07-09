@@ -313,7 +313,7 @@ namespace OpalLog
 			switch (level)
 			{
 			case Level::trace:
-				return "\033[32m";//绿色
+				return "\033[37m";//白色
 			case Level::debug:
 				return "\033[34m";//蓝色
 			case Level::info:
@@ -342,7 +342,9 @@ namespace OpalLog
 				value_str = std::forward<T>(value); // 字符串类型直接赋值
 			}
 			else {
-				value_str = std::to_string(std::forward<T>(value)); // 数值类型转为字符串
+				std::ostringstream oss;
+				oss << std::forward<T>(value);
+				value_str = oss.str(); // 数值类型转为字符串
 			}
 
 			if (pos == std::string::npos)

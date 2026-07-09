@@ -1,18 +1,27 @@
 #include"opalpch.h"
 #include"Application.h"
 
-#include"Events/ApplicationEvent.h"
 #include"Log.h"
 
 namespace Opal
 {
+#define BIND_EVENT_FN(x) std::bind(&x,this,std::placeholders::_1)
 	Application::Application()
 	{
 		m_Window = std::unique_ptr<Window>(Window::Create());
+		m_Window-> SetEventCallback(BIND_EVENT_FN(Application::OnEvent));//将OnEvent函数绑定到m_Window的m_Data中的EventCallbake
 	}
 	Application::~Application()
 	{
 	}
+	void Application::OnEvent(Event& e)
+	{
+		EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::OnWindowClose));
+
+		OPAL_TRACE("{}", e);
+	}
+	
 	void Application::Run()
 	{
 		while (m_Running)
@@ -22,5 +31,10 @@ namespace Opal
 			m_Window->OnUpdate();
 
 		}
+	}
+	bool Application::OnWindowClose(WindowCloseEvent& e)
+	{
+		m_Running = false;
+		return true;
 	}
 }

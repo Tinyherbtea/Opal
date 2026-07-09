@@ -44,7 +44,6 @@ project "Opal"
 
 	filter "system:windows"
 		cppdialect "C++17"
-		staticruntime "On"
 		systemversion "10.0.26100.0"
 
 	defines
@@ -56,8 +55,18 @@ project "Opal"
 	
 	postbuildcommands
 	{
-		 ("{COPY} %{cfg.targetdir}/Opal.dll ..\\bin\\" .. outputdir .. "\\Sandbox/")
+		"{MKDIR} ..\\bin\\" .. outputdir .. "\\Sandbox", 
+		 ("{COPYFILE} %{cfg.targetdir}/Opal.dll ..\\bin\\" .. outputdir .. "\\Sandbox/")
 	}
+
+	filter { "system:windows", "configurations:Debug" }
+        buildoptions { "/MDd" }
+
+	filter { "system:windows", "configurations:Release" }
+        buildoptions { "/MD" }
+
+	filter { "system:windows", "configurations:Dist" }
+        buildoptions { "/MD" }
 
 	filter "configurations:Debug"
 		defines "OPAL_DEBUG"
@@ -97,13 +106,21 @@ project "Sandbox"
 
 	filter "system:windows"
 		cppdialect "C++17"
-		staticruntime "On"
 		systemversion "10.0.26100.0"
 
 	defines
 	{
 		"OPAL_PLATFORM_WINDOWS"
 	}
+
+	filter { "system:windows", "configurations:Debug" }
+        buildoptions { "/MDd" }
+
+	filter { "system:windows", "configurations:Release" }
+        buildoptions { "/MD" }
+
+	filter { "system:windows", "configurations:Dist" }
+        buildoptions { "/MD" }
 
 	filter "configurations:Debug"
 		defines "OPAL_DEBUG"

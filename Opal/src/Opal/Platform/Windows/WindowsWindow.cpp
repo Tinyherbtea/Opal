@@ -1,5 +1,10 @@
 #include "opalpch.h"
 #include "Opal/Platform/Windows/WindowsWindow.h"
+
+#include "Opal/Events/KeyEvent.h"
+#include "Opal/Events/ApplicationEvent.h"
+#include "Opal/Events/MouseEvent.h"
+
 namespace Opal
 {
 	static bool s_OpalGLInitialized = false;
@@ -37,6 +42,84 @@ namespace Opal
 		m_Window = new OpalWindow(WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0,wTitle.c_str(), (int)props.Width, (int)props.Height);
 		m_Window->SetUserPointer(&m_Data);
 		SetVSync(true);
+		m_Window->SetWindowSizeCallback([](OpalWindow* window,int width, int height) 
+			{
+				WindowData& data = *(WindowData*)window->GetUserPointer();
+				WindowResizeEvent event(width,height);
+				data.EventCallback(event);
+				data.Width = width;
+				data.Height = height;
+			});
+		m_Window->SetWindowCloseCallback([](OpalWindow* window)
+			{
+				WindowData& data = *(WindowData*)window->GetUserPointer();
+				WindowCloseEvent event;
+				data.EventCallback(event);
+			});
+		m_Window->SetKeyCallback([](OpalWindow* window, int key, int scancode, int action, int mod)
+			{
+				WindowData& data = *(WindowData*)window->GetUserPointer();
+				
+				switch (action)
+				{
+				case KEY_PRESS :
+				{
+					KeyPressedEvent event(key,0);
+					data.EventCallback(event);
+					break;
+				}
+				case KEY_RELEASE :
+				{
+					KeyReleasedEvent event(key);
+					data.EventCallback(event);
+					break;
+				}
+				case KEY_REPEAT :
+				{
+					KeyPressedEvent event(key, 1);
+					data.EventCallback(event);
+					break;
+				}
+				}
+			});
+		m_Window->SetMouseButtonCallback([](OpalWindow* window, int button, int action, int mods, int x, int y)
+			{
+				WindowData& data = *(WindowData*)window->GetUserPointer();
+				switch (action)
+				{
+				case MOUSE_PRESS :
+				{
+					MouseButtonPressedEvent event(button);
+					data.EventCallback(event);
+					break;
+				}
+				case MOUSE_REPEAT :
+				{
+
+					break;
+				}
+				case MOUSE_RELEASE :
+				{
+					MouseButtonReleasedEvent event(button);
+					data.EventCallback(event);
+					break;
+				}
+				}
+			});
+		m_Window->SetMouseScrollCallback([](OpalWindow* window,double Offset) 
+			{
+				WindowData& data = *(WindowData*)window->GetUserPointer();
+
+				MouseScrolledEvent event((float)Offset);
+				data.EventCallback(event);
+			});
+		m_Window->SetMouseMoveCallback([](OpalWindow* window,double xpos,double ypos)
+			{
+				WindowData& data = *(WindowData*)window->GetUserPointer();
+
+				MouseMovedEvent event((float)xpos,(float)ypos);
+				data.EventCallback(event);
+			});
 	}
 	void WindowsWindow::Shutdown()
 	{

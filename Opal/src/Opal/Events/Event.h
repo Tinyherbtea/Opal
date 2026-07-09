@@ -45,7 +45,7 @@ namespace Opal
 			return GetCategoryFlags() & category;
 		}
 	};
-	class EventDispatcher
+	class EventDispatcher//这是一个事件分发器类，用于将事件分发给相应的处理函数
 	{
 	public:
 		EventDispatcher(Event& event)

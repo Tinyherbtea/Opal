@@ -28,9 +28,155 @@ namespace Opal
         case WM_DESTROY:
             PostQuitMessage(0);//发送WM_QUIT消息，此消息导致 GetMessage 函数返回零。
             return 0;
+        case WM_CLOSE:
+            if (window && window->OnWindowClose)
+                window->OnWindowClose(window);
+            break;
         case WM_SIZE:
             if (window && window->OnWindowSize)
-                window->OnWindowSize(LOWORD(lParam), HIWORD(lParam), window->WindowSizeData);
+                window->OnWindowSize(window, LOWORD(lParam), HIWORD(lParam));
+            break;
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+            if (window && window->OnKey)
+            {
+                int key = static_cast<int>(wParam); // 虚拟键码 
+                int scancode = static_cast<int>(lParam & 0x00FF0000) >> 16;// 从 lParam 高位提取扫描码
+                int action;
+                if (msg == WM_KEYUP)
+                {
+                    // 【抬起事件】
+                    action = KEY_RELEASE; // 1
+
+                    // 更新状态记录器：将该键标记为“已松开”
+                    window->KeyStates[key] = false;
+                }
+                else
+                {
+                    if (window->KeyStates[key] == false)
+                    {
+                        action = KEY_PRESS;
+                        window->KeyStates[key] = true;
+                        window->KeyPressTime[key] = GetTickCount64();
+                    }
+                    else
+                    {
+                        DWORD currentTime = GetTickCount64();
+                        if (currentTime - window->KeyPressTime[key] >= window->RepeatDelay)
+                        {
+                            action = KEY_REPEAT; // 达到时间，触发长按
+                        }
+                        else
+                        {
+                            return 0;
+                        }
+                    }
+                }
+                int mods = 0;
+                bool is_extended_key = (lParam & (1 << 24)) != 0;
+                if (GetKeyState(VK_SHIFT) & 0x8000)
+                {
+                    if (is_extended_key)
+                    {
+                        mods |= RIGHT_SHIFT; // 假设 1 代表 Shift
+                    }
+                    else
+                    {
+                        mods |= LEFT_SHIFT;
+                    }
+                }
+                if (GetKeyState(VK_CONTROL) & 0x8000)
+                {
+                    if (is_extended_key)
+                    {
+                        mods |= RIGHT_CTRL;
+                    }
+                    else
+                    {
+                        mods |= LEFT_CTRL;
+                    }
+                }
+                if (GetKeyState(VK_MENU) & 0x8000)
+                {
+                    if (is_extended_key)
+                    {
+                        mods |= RIGHT_ALT;
+                    }
+                    else
+                    {
+                        mods |= LEFT_ALT;
+                    }
+                }
+                window->OnKey(window, key, scancode, action, mods);
+            }
+            break;
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+            if (window && window->OnMouseButton)
+            {
+                int button;
+                if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP) button = MOUSE_BOUTTON_LEFT;
+                else if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP) button = MOUSE_BUTTON_1;
+                else if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP) button = MOUSE_BOUTTON_RIGHT;
+                int action;
+                if (msg == WM_LBUTTONUP || msg == WM_MBUTTONUP || msg == WM_RBUTTONUP)
+                {
+                    action = MOUSE_RELEASE;
+                    window->MouseButtonStates[button] = false;
+                }
+                else
+                {
+                    if (window->MouseButtonStates[button] == false)
+                    {
+                        action = MOUSE_PRESS;
+                        window->MouseButtonStates[button] = true;
+                        window->MouseButtonPressTime[button] = GetTickCount();
+                    }
+                    else
+                    {
+                        DWORD currentTime = GetTickCount();
+                        if (currentTime - window->MouseButtonPressTime[button] >= window->MouseRepeatDelayMs)
+                        {
+                            action = MOUSE_REPEAT;
+                        }
+                        else
+                        {
+                            return 0;
+                        }
+                    }
+                }
+                int mods = 0;
+                if (GetKeyState(VK_SHIFT) & 0x8000)
+                    mods |= LEFT_SHIFT; // Shift
+                if (GetKeyState(VK_CONTROL) & 0x8000)
+                    mods |= LEFT_CTRL; // Ctrl
+                if (GetKeyState(VK_MENU) & 0x8000)
+                    mods |= LEFT_ALT; // Alt
+                int xpos = GET_X_LPARAM(lParam);
+                int ypos = GET_Y_LPARAM(lParam);
+                window->OnMouseButton(window, button, action, mods, xpos, ypos);
+            }
+            break;
+        case WM_MOUSEWHEEL :
+            if (window && window->OnMouseScroll)
+            {
+                short wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+                double Offset = static_cast<double>(wheelDelta) / WHEEL_DELTA;  // 正值表示向前滚动，负值表示向后
+                window->OnMouseScroll(window,Offset);
+            }
+            break;
+        case WM_MOUSEMOVE :
+            if(window && window->OnMouseMove)
+            {
+				double xpos = static_cast<double>GET_X_LPARAM(lParam);//使用double类型来存储鼠标位置，以便在需要时进行更精确的计算或处理
+                double ypos = static_cast<double>GET_Y_LPARAM(lParam);
+
+                window->OnMouseMove(window,xpos,ypos);
+            }
             break;
         }
         return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -170,13 +316,12 @@ namespace Opal
 
         void OpalWindow::SetUserPointer(void* pointer)
         {
-            // 将指针存储在 GWLP_USERDATA 中
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pointer);
+            user_data = pointer;
         }
         void* OpalWindow::GetUserPointer()
         {
             // 从 GWLP_USERDATA 中取回指针
-            return (void*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            return user_data;
         }
         bool CallMessage()
         {
