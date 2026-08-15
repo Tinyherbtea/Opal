@@ -29,10 +29,33 @@
 #include<Windows.h>
 #include<windowsx.h>
 #include<gl/GL.h>
+#include<stddef.h>
 namespace Opal
 {
-	typedef void (*PFNGLCLEARPROC) (GLbitfield mask);
-	typedef void (*PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+	typedef char GLchar;
+	typedef ptrdiff_t GLsizeiptr;
+	typedef ptrdiff_t GLintptr;
+	//--------------------------------现代OpenGL函数指针类型定义--------------------------------
+	typedef void (*PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint* arrays);
+	typedef void (*PFNGLCREATEPROGRAMPROC) (void);
+	typedef void (*PFNGLCREATESHADERPROC) (GLenum type);
+	typedef void (*PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length);
+	typedef void (*PFNGLCOMPILESHADERPROC) (GLuint shader);
+	typedef void (*PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
+	typedef void (*PFNGLLINKPROGRAMPROC) (GLuint program);
+	typedef void (*PFNGLUSEPROGRAMPROC) (GLuint program);
+	typedef void (*PFNGLDELETEPROGRAMPROC) (GLuint program);
+	typedef void (*PFNGLDELETESHADERPROC) (GLuint shader);
+	typedef GLint(*PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar* name);
+	typedef void (*PFNGLUNIFORM4FPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+	typedef void (*PFNGLGENBUFFERSPROC) (GLsizei n, GLuint* buffers);
+	typedef void (*PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
+	typedef void (*PFNGLBUFFERDATAPROC) (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+	typedef void (*PFNGLBUFFERSUBDATAPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
+	typedef void (*PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint* buffers);
+	typedef void (*PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint index);
+	typedef void (*PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+	//窗口过程函数声明
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	class OPAL_API OpalWindowClass
 	{
@@ -47,8 +70,25 @@ namespace Opal
 	{
 	public:
 		static void Init(HDC hdc,HGLRC hglrc);
-		static PFNGLCLEARPROC glClear;
-		static PFNGLCLEARCOLORPROC glClearColor;
+		static PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
+		static PFNGLCREATEPROGRAMPROC glCreateProgram;
+		static PFNGLCREATESHADERPROC glCreateShader;
+		static PFNGLSHADERSOURCEPROC glShaderSource;
+		static PFNGLCOMPILESHADERPROC glCompileShader;
+		static PFNGLATTACHSHADERPROC glAttachShader;
+		static PFNGLLINKPROGRAMPROC glLinkProgram;
+		static PFNGLUSEPROGRAMPROC glUseProgram;
+		static PFNGLDELETEPROGRAMPROC glDeleteProgram;
+		static PFNGLDELETESHADERPROC glDeleteShader;
+		static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+		static PFNGLUNIFORM4FPROC glUniform4f;
+		static PFNGLGENBUFFERSPROC glGenBuffers;
+		static PFNGLBINDBUFFERPROC glBindBuffer;
+		static PFNGLBUFFERDATAPROC glBufferData;
+		static PFNGLBUFFERSUBDATAPROC glBufferSubData;
+		static PFNGLDELETEBUFFERSPROC glDeleteBuffers;
+		static PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+		static PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 	};//OpenGL函数加载器
 	class OPAL_API OpalWindow
 	{

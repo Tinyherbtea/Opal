@@ -83,6 +83,7 @@
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/MDd %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -112,6 +113,7 @@ copy /B /Y ..\bin\Debug-windows-x86_64\Opal\Opal.dll ..\bin\Debug-windows-x86_64
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/MD %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -142,6 +144,7 @@ copy /B /Y ..\bin\Release-windows-x86_64\Opal\Opal.dll ..\bin\Release-windows-x8
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/MD %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -170,6 +173,10 @@ copy /B /Y ..\bin\Dist-windows-x86_64\Opal\Opal.dll ..\bin\Dist-windows-x86_64\S
     <ClInclude Include="src\Opal\Events\KeyEvent.h" />
     <ClInclude Include="src\Opal\Events\MouseEvent.h" />
     <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\opalgl\include\opalgl.h" />
+    <ClInclude Include="src\Opal\Gui\GuiLayer.h" />
+    <ClInclude Include="src\Opal\Gui\src\UI.h" />
+    <ClInclude Include="src\Opal\Layer.h" />
+    <ClInclude Include="src\Opal\LayerStack.h" />
     <ClInclude Include="src\Opal\Log.h" />
     <ClInclude Include="src\Opal\OpalLog.h" />
     <ClInclude Include="src\Opal\Platform\Windows\WindowsWindow.h" />
@@ -180,6 +187,10 @@ copy /B /Y ..\bin\Dist-windows-x86_64\Opal\Opal.dll ..\bin\Dist-windows-x86_64\S
     <ClCompile Include="src\Opal\Application.cpp" />
     <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\GLFL.cpp" />
     <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\window_win.cpp" />
+    <ClCompile Include="src\Opal\Gui\GuiLayer.cpp" />
+    <ClCompile Include="src\Opal\Gui\src\UI.cpp" />
+    <ClCompile Include="src\Opal\Layer.cpp" />
+    <ClCompile Include="src\Opal\LayerStack.cpp" />
     <ClCompile Include="src\Opal\Log.cpp" />
     <ClCompile Include="src\Opal\OpalLog.cpp" />
     <ClCompile Include="src\Opal\Platform\Windows\WindowsWindow.cpp" />

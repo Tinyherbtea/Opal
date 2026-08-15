@@ -10,24 +10,20 @@ namespace Opal
 	{
 	public:
 		static void Init();
-
-		inline static std::shared_ptr<OpalLog::Logger>& GetCoreLogger() { return CoreLogger; }
-		inline static std::shared_ptr<OpalLog::Logger>& GetClientLogger() { return ClientLogger; }
 	private:
-		static std::shared_ptr<OpalLog::Logger> CoreLogger;
-		static std::shared_ptr<OpalLog::Logger> ClientLogger;
+		static OpalLog::Sink* CoreSink;
+		static OpalLog::Sink* ClientSink;
 	};
 
 }
 
-#define OPAL_CORE_TRACE(...)   ::Opal::Log::GetCoreLogger()->Trace(__VA_ARGS__)
-#define OPAL_CORE_FATAL(...)   ::Opal::Log::GetCoreLogger()->Debug(__VA_ARGS__)
-#define OPAL_CORE_INFO(...)    ::Opal::Log::GetCoreLogger()->Info(__VA_ARGS__)
-#define OPAL_CORE_WARN(...)    ::Opal::Log::GetCoreLogger()->Warn(__VA_ARGS__)
-#define OPAL_CORE_ERROR(...)   ::Opal::Log::GetCoreLogger()->Error(__VA_ARGS__)
-
-#define OPAL_TRACE(...)        ::Opal::Log::GetClientLogger()->Trace(__VA_ARGS__)
-#define OPAL_FATAL(...)        ::Opal::Log::GetClientLogger()->Debug(__VA_ARGS__)
-#define OPAL_INFO(...)         ::Opal::Log::GetClientLogger()->Info(__VA_ARGS__)
-#define OPAL_WARN(...)         ::Opal::Log::GetClientLogger()->Warn(__VA_ARGS__)
-#define OPAL_ERROR(...)        ::Opal::Log::GetClientLogger()->Error(__VA_ARGS__)
+#define OPAL_CORE_TRACE(...)   ::OpalLog::Log(::OpalLog::Level::trace, __VA_ARGS__)
+#define OPAL_CORE_DEBG(...)   ::OpalLog::Log(::OpalLog::Level::debug, __VA_ARGS__)
+#define OPAL_CORE_INFO(...)    ::OpalLog::Log(::OpalLog::Level::info, __VA_ARGS__)
+#define OPAL_CORE_WARN(...)    ::OpalLog::Log(::OpalLog::Level::warn, __VA_ARGS__)
+#define OPAL_CORE_ERROR(...)   ::OpalLog::Log(::OpalLog::Level::error, __VA_ARGS__)
+#define OPAL_TRACE(...)        ::OpalLog::Log(::OpalLog::Level::trace, __VA_ARGS__)
+#define OPAL_DEBUG(...)        ::OpalLog::Log(::OpalLog::Level::debug, __VA_ARGS__)
+#define OPAL_INFO(...)         ::OpalLog::Log(::OpalLog::Level::info, __VA_ARGS__)
+#define OPAL_WARN(...)         ::OpalLog::Log(::OpalLog::Level::warn, __VA_ARGS__)
+#define OPAL_ERROR(...)        ::OpalLog::Log(::OpalLog::Level::error, __VA_ARGS__)

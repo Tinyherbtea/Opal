@@ -2,18 +2,16 @@
 #include "Log.h"
 namespace Opal
 {
-	std::shared_ptr<OpalLog::Logger> Log::CoreLogger;
-	std::shared_ptr<OpalLog::Logger> Log::ClientLogger;
+	OpalLog::Sink* Log::CoreSink = nullptr;
+	OpalLog::Sink* Log::ClientSink = nullptr;
 	void Log::Init()
 	{
 		OpalLog::pattern_set("%^[%T][%n]:%v%$");
 
-		CoreLogger = OpalLog::LogRegister::Console_("Opal");
-		CoreLogger->Logger_level = OpalLog::Level::trace;
-		CoreLogger->StartLoging();
+		CoreSink = OpalLog::CreateSink(OpalLog::SinkType::Console, 4096 * 16);
+		OpalLog::RegisterSink(CoreSink->GetQueue(), OpalLog::Level::trace,"Opal");
 
-		ClientLogger = OpalLog::LogRegister::Console_("Stains");
-		ClientLogger->Logger_level = OpalLog::Level::trace;
-		ClientLogger->StartLoging();
+		ClientSink = OpalLog::CreateSink(OpalLog::SinkType::Console, 4096 * 16);
+		OpalLog::RegisterSink(ClientSink->GetQueue(), OpalLog::Level::trace,"Stain");
 	}
 }

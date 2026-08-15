@@ -1,17 +1,34 @@
 #pragma once
 #include"opalpch.h"
-
+#include<stdio.h>
 #ifdef OPALLOG_EXPORTS
 #define OPALLOG_API __declspec(dllexport)
 #else
 #define OPALLOG_API __declspec(dllimport)
 #endif
 
+#define MAX_REGISTER_SINK 16
+#define MAX_LOG_SIZE 1024
+//日志系统
+//日志格式pattern标识符：
+//"%v":日志信息
+//"%Y":四位数的年份
+//"%m":两位数的月份
+//"%d":两位数的日期
+//"%H":两位数的小时
+//"%M":两位数的分钟
+//"%S":两位数的秒钟
+//"%T":%H:%M:%S
+//"%F":%Y-%m-%d
+//"%L":日志级别
+//"%^":开始颜色编码
+//"%n":日志记录器名称
 namespace OpalLog
 {
 	extern OPALLOG_API std::string pattern;
-	void pattern_set(const std::string& string);
-	enum class  Level
+	OPALLOG_API void pattern_set(const std::string& string);
+	typedef unsigned long long size;
+	typedef enum Level
 	{
 		trace,//追踪
 		debug,//调试
@@ -19,363 +36,260 @@ namespace OpalLog
 		warn,
 		error
 	};
-	//日志系统
-	//日志格式pattern标识符：
-	//"%v":日志信息
-	//"%Y":四位数的年份
-	//"%m":两位数的月份
-	//"%d":两位数的日期
-	//"%H":两位数的小时
-	//"%M":两位数的分钟
-	//"%S":两位数的秒钟
-	//"%T":%H:%M:%S
-	//"%F":%Y-%m-%d
-	//"%L":日志级别
-	//"%^":开始颜色编码
-	//"%n":日志记录器名称
-	//--------日志接收器基类--------
-	class  Logsink
+	typedef enum SinkType
 	{
-	public:
-		virtual ~Logsink() = default;
-		virtual void log(const std::string& message) = 0;
-		virtual void setLevel(Level level) = 0;
-		virtual Level getLevel() const = 0;
+		Console,
+		File
 	};
-	//--------控制台接收器-----------
-	class  Consolesink : public Logsink
+	//----------队列----------
+	typedef struct Queue
 	{
-	public:
-		void log(const std::string& message) override
-		{
-			std::cout << message << std::endl;
-		}
-		void setLevel(Level level) override
-		{
-			LogLevel = level;
-		}
+		void* buffer;
+		size capacity;
+		size mask;
 
-		Level getLevel() const override
-		{
-			return LogLevel;
-		}
-	private:
-		Level LogLevel{ Level::info };
-	};
-	//----------文件接收器-----------
-	class  Filesink : public Logsink
+		volatile size push_line;
+		volatile size pop_line;
+	}Queue;
+	OPALLOG_API int Queue_Init(Queue* queue, void* buffer, size capacity);
+	OPALLOG_API int push(Queue* queue, const char* message, size logsize);
+	OPALLOG_API int pop(Queue* queue, char* buffer, unsigned int buffersize, unsigned int* out_logsize);
+	//----------格式化处理----------
+	inline std::string to_str(const char* value)
 	{
-	public:
-		explicit Filesink(const std::string& filename) : file(filename, std::ios::app)
-		{
-			if (!file.is_open())
-			{
-				throw std::runtime_error("Failed to open file for logging.");
-			}
-		}
-		void log(const std::string& message) override
-		{
-			file << message << std::endl;
-		}
-		void setLevel(Level level) override
-		{
-			LogLevel = level;
+		return value ? value : "(null)";
+	}
+	inline std::string to_str(const std::string& value) {
+		return value;
+	}
+	template <typename T>
+	inline std::string to_str(const T& value) {
+		std::ostringstream oss;
+		oss << value;
+		return oss.str();
+	}
+	inline std::string argsformat(const std::string& format) {
+		return format;
+	}
+	template <typename T, typename... Args>
+	std::string argsformat(const std::string& format, T&& arg, Args&&... args) {
+		size_t pos = format.find("{}");
+		std::string str_of_arg = to_str(std::forward<T>(arg));
+
+		if (pos == std::string::npos) {
+			return format + str_of_arg + argsformat("", std::forward<Args>(args)...);
 		}
 
-		Level getLevel() const override
-		{
-			return LogLevel;
-		}
-	private:
-		Level LogLevel{ Level::info };
-		std::ofstream file;
-	};
-	//-----------数组实现的无锁队列------------
-	template<typename T>
-	class  LockfreeQueue
+		std::string result = format.substr(0, pos) + str_of_arg;
+		result += argsformat(format.substr(pos + 2), std::forward<Args>(args)...);
+
+		return result;
+	}
+	//----------sink----------
+	class OPALLOG_API Sink
 	{
+	protected:
+		Queue queue;
+		void* buffer;
+		std::thread thread;
+		volatile bool running;
+		virtual void Sent(const char* msg, unsigned int len) = 0;
 	public:
-		LockfreeQueue(size_t capacity) :Capacity(capacity), Head(0), Tail(0)
+		Sink(size size) :running(true)
 		{
-			Buffer.resize(capacity);
-		};
-		//入队操作
-		bool join(const T& item) {
-			size_t tail = Tail.load(std::memory_order_relaxed);
-			size_t nextTail = (tail + 1) % Capacity;
-
-			if (nextTail == Head.load(std::memory_order_acquire)) {
-				return false; //队列已满
-			}
-
-			Buffer[tail] = item;
-			Tail.store(nextTail, std::memory_order_release);
-			return true;
-		}
-		//出队操作
-		bool out(T& item) {
-			size_t head = Head.load(std::memory_order_relaxed);
-
-			if (head == Tail.load(std::memory_order_acquire)) {
-				return false; //队列为空
-			}
-
-			item = Buffer[head];
-			Head.store((head + 1) % Capacity, std::memory_order_release);
-			return true;
-		}
-		LockfreeQueue(LockfreeQueue&& other) noexcept
-			: Buffer(std::move(other.Buffer)),
-			Capacity(other.Capacity),
-			Head(other.Head.load()),
-			Tail(other.Tail.load())
-		{
-		}
-		LockfreeQueue& operator=(LockfreeQueue&& other) noexcept
-		{
-			if (this != &other)
-			{
-				Buffer = std::move(other.Buffer);
-				// Capacity 是 const，不能改变；这里假设两个队列构造时的 capacity 相同或移动后无需使用原 capacity 的值修改。
-				Head.store(other.Head.load());
-				Tail.store(other.Tail.load());
-			}
-			return *this;
-		}
-
-	private:
-		std::vector<T> Buffer;
-		const size_t Capacity;
-		std::atomic<size_t> Head;
-		std::atomic<size_t> Tail;
-	};
-	//-------------日志--------------
-	class  Logger
-	{
-		//---------基础信息--------
-	private:
-		struct LogMessage
-		{
-			Level level{ Level::info };
-			std::string message;
-
-		};
-	public:
-		std::string Logger_name;
-		Level Logger_level{ Level::info };
-		//----------线程管理---------
-	private:
-		LockfreeQueue<LogMessage> LogQueue;//日志消息队列
-		std::vector<std::pair<std::shared_ptr<Logsink>, std::unique_ptr<LockfreeQueue<LogMessage>>>> SinkQueues;//接收器队列
-		std::thread  LogThread;//日志主线程
-		std::vector<std::thread> SinkThread;//接收器线程
-		std::atomic<bool> StopRequested{ false };//线程停止通知标志
-		std::mutex mutex;
-	public:
-		Logger(std::string name, int mainqueuesize);
-		~Logger();
-		void RegisterSink(const std::shared_ptr<Logsink> Sink, int QueueSize);
-		template<typename... Args>
-		void Trace(const std::string& format, Args&&... args)
-		{
-			std::string message = Format(Level::trace, format, std::forward<Args>(args)...);
-			LogMessage msg{ Level::trace, message };
-			LogQueue.join(msg);
-		}
-		template<typename... Args>
-		void Debug(const std::string& format, Args&&... args)
-		{
-			std::string message = Format(Level::debug, format, std::forward<Args>(args)...);
-			LogMessage msg{ Level::debug, message };
-			LogQueue.join(msg);
-		}
-		template<typename... Args>
-		void Info(const std::string& format, Args&&... args)
-		{
-			std::string message = Format(Level::info, format, std::forward<Args>(args)...);
-			LogMessage msg{ Level::info, message };
-			LogQueue.join(msg);
-		}
-		template<typename... Args>
-		void Warn(const std::string& format, Args&&... args)
-		{
-			std::string message = Format(Level::warn, format, std::forward<Args>(args)...);
-			LogMessage msg{ Level::warn, message };
-			LogQueue.join(msg);
-		}
-		template<typename... Args>
-		void Error(const std::string& format, Args&&... args)
-		{
-			std::string message = Format(Level::error, format, std::forward<Args>(args)...);
-			LogMessage msg{ Level::error, message };
-			LogQueue.join(msg);
-		}
-		void StartLoging();
-		void Stopping();
-	private:
-		void thread();//线程函数，各个sink的函数
-		void Sinkthread(LockfreeQueue<LogMessage>& queue, Logsink* Sink);
-		template<typename... Args>
-		std::string Format(Level level, const std::string& format, Args&&... args)
-		{
-			//---------------------------------获取时间信息-----------------------------------------
-			auto now = std::chrono::system_clock::now();//获取当前时间点
-			std::time_t time = std::chrono::system_clock::to_time_t(now);//将时间点转换为time_t类型
-			std::tm tm;
-			localtime_s(&tm, &time);//将time_t类型转换为tm结构体，包含年月日时分秒等信息
-			//-------------------------------以字符串方式获取格式-----------------------------------
-			std::string message = argsformat(format,std::forward<Args>(args)...);						 //将格式化字符串转换为std::string对象
-			//---------------------------------------------------------------------------------------
-			std::stringstream ss;
-			char placeholder;
-			size_t pos = 0;
-			while (pos != std::string::npos)
-			{
-				size_t nextpos = pattern.find("%", pos);
-				if (nextpos == std::string::npos)
+			buffer = new char[size];
+			Queue_Init(&queue, buffer, size);
+			thread = std::thread([this]()
 				{
-					ss << pattern.substr(pos);
-					break;
-				}
-				ss << pattern.substr(pos, nextpos - pos);
-				if (nextpos + 1 >= pattern.size())
-				{
-					break;
-				}
-				placeholder = pattern[nextpos + 1];//提取占位符
-				switch (placeholder)
-				{
-				case'^':
-					ss << colorcode(level);//这里只加入开始的颜色编码，因为接收器的log函数会自动加入结束颜色编码
-					break;
-				case'$':
-					ss << "\033[0m";
-					break;
-				case'v':
-					ss << message;
-					break;
-				case 'Y':
-					ss << tm.tm_year + 1900;//tm.tm_year是从1900年开始的，所以需要加上1900
-					break;
-				case 'm':
-					ss << (tm.tm_mon < 9 ? "0" : "") << tm.tm_mon + 1;
-					break;
-				case 'd':
-					ss << (tm.tm_mday < 10 ? "0" : "") << tm.tm_mday;
-					break;
-				case 'H':
-					ss << (tm.tm_hour < 10 ? "0" : "") << tm.tm_hour;
-					break;
-				case 'M':
-					ss << (tm.tm_min < 10 ? "0" : "") << tm.tm_min;
-					break;
-				case 'S':
-					ss << (tm.tm_sec < 10 ? "0" : "") << tm.tm_sec;
-					break;
-				case 'T':
-					ss << (tm.tm_hour < 10 ? "0" : "") << tm.tm_hour << ":" << (tm.tm_min < 10 ? "0" : "") << tm.tm_min << ":" << (tm.tm_sec < 10 ? "0" : "") << tm.tm_sec;
-					break;
-				case 'F':
-					ss << tm.tm_year + 1900 << "-" << (tm.tm_mon < 9 ? "0" : "") << tm.tm_mon + 1 << "-" << (tm.tm_mday < 10 ? "0" : "") << tm.tm_mday;
-					break;
-				case 'L':
-					switch (level)
+					char logbuffer[MAX_LOG_SIZE];//单条日志消息的最大长度
+					unsigned int logsize;
+
+					int idle_count = 0;
+					while (running)
 					{
-					case Level::trace:
-						ss << "TRACE";
-						break;
-					case Level::debug:
-						ss << "DEBUG";
-						break;
-					case Level::info:
-						ss << "INFO";
-						break;
-					case Level::warn:
-						ss << "WARN";
-						break;
-					case Level::error:
-						ss << "ERROR";
-						break;
+						bool has_data = false;
+						while (pop(&queue, logbuffer, sizeof(logbuffer), &logsize))
+						{
+							Sent(logbuffer, logsize);
+							has_data = true;
+						}
+						if (has_data) { idle_count = 0; }
+						else
+						{
+							if (idle_count < 100) std::this_thread::yield();
+							else std::this_thread::sleep_for(std::chrono::milliseconds(1));
+							idle_count++;
+						}
 					}
-					break;
-				case'n':
-					ss << Logger_name;
-					break;
-				default:
-					ss << placeholder;
-				}
-				pos = nextpos + 2;
-			}
-			return ss.str();
+				});
 		}
-		std::string colorcode(Level level)
+		virtual ~Sink()
 		{
-			switch (level)
-			{
-			case Level::trace:
-				return "\033[37m";//白色
-			case Level::debug:
-				return "\033[34m";//蓝色
-			case Level::info:
-				return "\033[32m";//绿色
-			case Level::warn:
-				return "\033[33m";//黄色
-			case Level::error:
-				return "\033[31m";//红色
-			default:
-				return"";
+			running = false;
+			if (thread.joinable()) {
+				thread.join();
 			}
+			delete[](char*)buffer;
 		}
-		inline std::string argsformat(const std::string& format)
-		{
-			return format;
-		}
-		template <typename T, typename... Args>
-		std::string argsformat(const std::string& format, T&& value, Args&&... args)
-		{
-			size_t pos = format.find("{}");
-
-			// 将当前参数 value 转换为字符串
-			std::string value_str;
-			if constexpr (std::is_same_v<std::decay_t<T>, std::string> ||
-				std::is_same_v<std::decay_t<T>, const char*>) {
-				value_str = std::forward<T>(value); // 字符串类型直接赋值
-			}
-			else {
-				std::ostringstream oss;
-				oss << std::forward<T>(value);
-				value_str = oss.str(); // 数值类型转为字符串
-			}
-
-			if (pos == std::string::npos)
-			{
-				return format + value_str + argsformat("", std::forward<Args>(args)...);
-			}
-			std::string result = format.substr(0, pos) + value_str;
-
-			result += argsformat(format.substr(pos + 2), std::forward<Args>(args)...);
-
-			return result;
-		}
+		Queue* GetQueue() { return &queue; }
 	};
-	class  LogRegister
+	class OPALLOG_API ConsoleSink : public Sink
 	{
+	protected:
+		void Sent(const char* m, unsigned int l) override
+		{
+			std::string msg;
+			msg.reserve(l + 1);
+			msg.append(m, l);
+			msg += '\n';
+			std::cout.write(msg.c_str(),msg.size());
+			std::cout.flush();
+		}
 	public:
-		static std::shared_ptr<Logger> Console_(const std::string& loggerName)
-		{
-			std::shared_ptr<Logger> logger = std::make_shared<Logger>(loggerName, 1024);
-			std::shared_ptr<Consolesink> sink = std::make_shared<Consolesink>();
-			sink->setLevel(Level::trace);
-			logger->RegisterSink(sink, 1024);
-			return logger;
-		}
-		static std::shared_ptr<Logger> File_(const std::string& loggerName, const std::string& filename)
-		{
-			std::shared_ptr<Logger> logger = std::make_shared<Logger>(loggerName, 1024);
-			std::shared_ptr<Filesink> sink = std::make_shared<Filesink>(filename);
-			sink->setLevel(Level::trace);
-			logger->RegisterSink(sink, 1024);
-			return logger;
-		}
+		ConsoleSink(size s) : Sink(s) {}
+		~ConsoleSink() { }
 	};
+	class OPALLOG_API FileSink : public Sink
+	{
+	protected:
+		void Sent(const char* m, unsigned int l) override
+		{
+			if (!file.is_open() || file.fail())
+			{
+				std::cerr << "Log file error!" << std::endl;
+				return;
+			}
+			file.write(m, l);
+			file.put('\n');
+			file.flush();
+		}
+	private:
+		std::ofstream file;
+	public:
+		FileSink(size s, const char* path) :Sink(s), file(path) {}
+		~FileSink() { if (file.is_open()) {  file.close(); } }
+	};
+	OPALLOG_API Sink* CreateSink(SinkType type, size Size);
+	//----------sink_route----------
+	struct SinkRoute
+	{
+		Queue* queue;
+		Level level;
+		std::string sinkname;
+	};
+	extern OPALLOG_API SinkRoute sinkroute[MAX_REGISTER_SINK];
+	extern OPALLOG_API int sink_count;
+	OPALLOG_API void RegisterSink(Queue* queue, Level level, const char* sinkname);
+	//----------Log----------
+	inline const char* GetColorCode(Level level) {
+		switch (level) {
+		case trace: return "\033[32m"; // 绿色
+		case debug:	return "\033[34m"; // 蓝色
+		case info:  return "\033[32m"; // 绿色
+		case warn:	return "\033[33m"; // 黄色
+		case error:	return "\033[31m"; // 红色
+		default:              return "\033[0m";  // 默认白色
+		}
+	}
+	template <typename... Args>
+	void Log(Level level, const char* fmt, Args&&... args)
+	{
+
+
+		std::string user_msg = argsformat(fmt, std::forward<Args>(args)...);
+
+		auto now = std::chrono::system_clock::now();
+		std::time_t time = std::chrono::system_clock::to_time_t(now);
+		auto micros = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
+		std::tm tm;
+		localtime_s(&tm, &time);
+
+		std::string message;
+		message.reserve(MAX_LOG_SIZE);
+
+		size pos = 0;
+		while (pos < pattern.size())
+		{
+			size next_pos = pattern.find('%', pos);
+			if (next_pos == std::string::npos) {
+				message.append(pattern, pos, std::string::npos);
+				break;
+			}
+			message.append(pattern, pos, next_pos - pos);
+
+			if (next_pos + 1 >= pattern.size())
+				break;
+
+			char placeholder = pattern[next_pos + 1];
+			switch (placeholder)
+			{
+			case '^':
+				message += GetColorCode(level); break;
+			case '$':
+				message += "\033[0m"; break;
+			case 'v':
+				message += user_msg; break;
+			case 'Y':
+				message += std::to_string(tm.tm_year + 1900); break;
+			case 'm':
+				message += (tm.tm_mon < 9 ? "0" : "") + std::to_string(tm.tm_mon + 1); break;
+			case 'd':
+				message += (tm.tm_mday < 10 ? "0" : "") + std::to_string(tm.tm_mday); break;
+			case 'H':
+				message += (tm.tm_hour < 10 ? "0" : "") + std::to_string(tm.tm_hour); break;
+			case 'M':
+				message += (tm.tm_min < 10 ? "0" : "") + std::to_string(tm.tm_min); break;
+			case 'S':
+				message += (tm.tm_sec < 10 ? "0" : "") + std::to_string(tm.tm_sec); break;
+			case 'f':
+			{
+				char buf[7];
+				snprintf(buf, sizeof(buf), "%06lld", (long long)micros.count());
+				message += buf;
+				break;
+			}
+			case 'T':
+				message += (tm.tm_hour < 10 ? "0" : "") + std::to_string(tm.tm_hour) + ":" +
+					(tm.tm_min < 10 ? "0" : "") + std::to_string(tm.tm_min) + ":" +
+					(tm.tm_sec < 10 ? "0" : "") + std::to_string(tm.tm_sec);
+				break;
+			case 'F':
+				message += std::to_string(tm.tm_year + 1900) + "-" +
+					(tm.tm_mon < 9 ? "0" : "") + std::to_string(tm.tm_mon + 1) + "-" +
+					(tm.tm_mday < 10 ? "0" : "") + std::to_string(tm.tm_mday);
+				break;
+			case 'L': // 日志级别
+				switch (level)
+				{
+				case trace: message += "TRACE"; break;
+				case debug: message += "DEBUG"; break;
+				case info:  message += "INFO";  break;
+				case warn:  message += "WARN";  break;
+				case error:   message += "ERROR"; break;
+				default:              message += "UNKNOWN"; break;
+				}
+				break;
+			case 'n':
+				message += "__SINK_NAME__";
+				break;
+			default:
+				message.push_back(placeholder);
+				break;
+			}
+			pos = next_pos + 2;
+		}
+		void* p = &sinkroute;
+		for (int i = 0; i < sink_count; ++i)
+		{
+			if (level >= sinkroute[i].level)
+			{
+				std::string msg = message;
+				size_t sink_name_pos = msg.find("__SINK_NAME__");
+				if (sink_name_pos != std::string::npos) {
+					msg.replace(sink_name_pos, 13, sinkroute[i].sinkname);
+				}
+				push(sinkroute[i].queue, msg.c_str(), (unsigned int)msg.size());
+			}
+		}
+	}
 }

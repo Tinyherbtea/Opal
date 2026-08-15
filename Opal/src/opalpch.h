@@ -6,19 +6,16 @@
 #include<algorithm>
 #include<functional>
 
+#include<string.h>
 #include<string>
 #include<sstream>
 #include<fstream>
 #include<vector>
 #include<thread>
-#include<chrono>
 #include<atomic>
-#include<mutex>
+#include<chrono>
 #include<unordered_map>
 #include<unordered_set>
-
-#include"Opal/Log.h"
-#include"Opal/GraphicsAPI/OpenGL/opalgl/include/opalgl.h"
 
 #ifdef OPAL_PLATFORM_WINDOWS
 #include<Windows.h>

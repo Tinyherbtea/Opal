@@ -1,6 +1,8 @@
 #include "opalpch.h"
 #include "Opal/Platform/Windows/WindowsWindow.h"
 
+#include"Opal/Log.h"
+
 #include "Opal/Events/KeyEvent.h"
 #include "Opal/Events/ApplicationEvent.h"
 #include "Opal/Events/MouseEvent.h"

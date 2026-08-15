@@ -22,6 +22,12 @@
     <Filter Include="Opal\GraphicsAPI\OpenGL\opalgl\src">
       <UniqueIdentifier>{C4754AC4-B0B1-4D2E-19C4-6525051FF648}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Opal\Gui">
+      <UniqueIdentifier>{A54E80FB-911B-DB06-BA34-C9AEA6601095}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Opal\Gui\src">
+      <UniqueIdentifier>{3CD7BC4A-283A-4CEF-D1BF-84A5BD011872}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Opal\Platform">
       <UniqueIdentifier>{45420C2E-B102-8864-7A3D-D1E1E6BCCC40}</UniqueIdentifier>
     </Filter>
@@ -55,6 +61,18 @@
     <ClInclude Include="src\Opal\GraphicsAPI\OpenGL\opalgl\include\opalgl.h">
       <Filter>Opal\GraphicsAPI\OpenGL\opalgl\include</Filter>
     </ClInclude>
+    <ClInclude Include="src\Opal\Gui\GuiLayer.h">
+      <Filter>Opal\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\Gui\src\UI.h">
+      <Filter>Opal\Gui\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\Layer.h">
+      <Filter>Opal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Opal\LayerStack.h">
+      <Filter>Opal</Filter>
+    </ClInclude>
     <ClInclude Include="src\Opal\Log.h">
       <Filter>Opal</Filter>
     </ClInclude>
@@ -78,6 +96,18 @@
     </ClCompile>
     <ClCompile Include="src\Opal\GraphicsAPI\OpenGL\opalgl\src\window_win.cpp">
       <Filter>Opal\GraphicsAPI\OpenGL\opalgl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Opal\Gui\GuiLayer.cpp">
+      <Filter>Opal\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Opal\Gui\src\UI.cpp">
+      <Filter>Opal\Gui\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Opal\Layer.cpp">
+      <Filter>Opal</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Opal\LayerStack.cpp">
+      <Filter>Opal</Filter>
     </ClCompile>
     <ClCompile Include="src\Opal\Log.cpp">
       <Filter>Opal</Filter>
