@@ -1,5 +1,5 @@
 #include<Opal.h>
-
+#include"Opal/Gui/GuiLayer.h"
 class ExampleLayer :public Opal::Layer
 {
 public:
@@ -23,7 +23,7 @@ class Stains : public Opal::Application
 public:
 	Stains()
 	{
-		PushLayer(new ExampleLayer());
+		PushLayer(new Opal::GuiLayer());
 	}
 	~Stains()
 	{

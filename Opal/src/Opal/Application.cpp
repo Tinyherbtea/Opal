@@ -17,10 +17,12 @@ namespace Opal
 	void Application::PushLayer(Layer* layer)
 	{
 		m_LayerStack.PushLayer(layer);
+		layer->OnAttach();
 	}
 	void Application::PushOverlay(Layer* layer)
 	{
 		m_LayerStack.PushOverlay(layer);
+		layer->OnAttach();
 	}
 	void Application::OnEvent(Event& e)
 	{
@@ -42,9 +44,10 @@ namespace Opal
 		{
 			glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			m_Window->OnUpdate();
+			
 			for (Layer* layer : m_LayerStack)
 				layer->OnUpdate();
+			m_Window->OnUpdate();
 		}
 	}
 	bool Application::OnWindowClose(WindowCloseEvent& e)

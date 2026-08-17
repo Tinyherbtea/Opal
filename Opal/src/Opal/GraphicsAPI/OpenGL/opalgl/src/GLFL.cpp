@@ -21,6 +21,10 @@ namespace Opal
     PFNGLDELETEBUFFERSPROC GLFL::glDeleteBuffers = nullptr;
     PFNGLENABLEVERTEXATTRIBARRAYPROC GLFL::glEnableVertexAttribArray = nullptr;
     PFNGLVERTEXATTRIBPOINTERPROC GLFL::glVertexAttribPointer = nullptr;
+    PFNGLBINDVERTEXARRAYPROC GLFL::glBindVertexArray = nullptr;
+    PFNGLDELETEVERTEXARRAYSPROC GLFL::glDeleteVertexArrays = nullptr;
+    PFNGLGETSHADERIVPROC GLFL::glGetShaderiv = nullptr;
+    PFNGLGETSHADERINFOLOGPROC GLFL::glGetShaderInfoLog = nullptr;
 	void GLFL::Init(HDC hdc,HGLRC hglrc)
 	{
 		glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
@@ -42,6 +46,10 @@ namespace Opal
         glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
         glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
         glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
+        glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
+        glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
+		glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
+		glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
 	}
 	
 }

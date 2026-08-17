@@ -1,5 +1,6 @@
 #include"opalpch.h"
 #include"GuiLayer.h"
+
 namespace Opal
 {
 	GuiLayer::GuiLayer():Layer("GuiLayer")
@@ -9,7 +10,14 @@ namespace Opal
 	void GuiLayer::OnAttach() 
     {
 		memset(&ui_context, 0, sizeof(context));
+        Renderer::Init();
+
+        OPAL_INFO("GuiLayer Attached & UI Renderer Initialized");
 	}
+    void GuiLayer::OnDetach() {
+        Renderer::Shutdown();
+        OPAL_INFO("GuiLayer Detached");
+    }
     void GuiLayer::OnUpdate() 
     {
         ui_begin(&ui_context);
@@ -23,6 +31,12 @@ namespace Opal
         }
 
         ui_end(&ui_context);
+        Renderer::RenderCommands(
+            ui_context.commands,
+            ui_context.command_count,
+            960,
+            540
+        );
     }
     void GuiLayer::OnEvent(Event& e) 
     {

@@ -30,6 +30,18 @@
 #include<windowsx.h>
 #include<gl/GL.h>
 #include<stddef.h>
+
+#define GL_COMPILE_STATUS 0x8B82
+#define GL_LINK_STATUS    0x8B82 
+#define GL_VERTEX_SHADER   0x8B31
+#define GL_FRAGMENT_SHADER 0x8B30
+#define GL_INFO_LOG_LENGTH 0x8B84
+
+#define GL_VERTEX_SHADER              0x8B31
+#define GL_FRAGMENT_SHADER            0x8B30
+#define GL_ARRAY_BUFFER               0x8892
+#define GL_DYNAMIC_DRAW               0x88E8
+
 namespace Opal
 {
 	typedef char GLchar;
@@ -37,8 +49,8 @@ namespace Opal
 	typedef ptrdiff_t GLintptr;
 	//--------------------------------现代OpenGL函数指针类型定义--------------------------------
 	typedef void (*PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint* arrays);
-	typedef void (*PFNGLCREATEPROGRAMPROC) (void);
-	typedef void (*PFNGLCREATESHADERPROC) (GLenum type);
+	typedef GLuint(*PFNGLCREATEPROGRAMPROC) (void);
+	typedef GLuint(*PFNGLCREATESHADERPROC) (GLenum type);
 	typedef void (*PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length);
 	typedef void (*PFNGLCOMPILESHADERPROC) (GLuint shader);
 	typedef void (*PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
@@ -55,6 +67,10 @@ namespace Opal
 	typedef void (*PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint* buffers);
 	typedef void (*PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint index);
 	typedef void (*PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+	typedef void (*PFNGLBINDVERTEXARRAYPROC) (GLuint array);
+	typedef void (*PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint* arrays);
+	typedef void (*PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint* params);
+	typedef void (*PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
 	//窗口过程函数声明
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	class OPAL_API OpalWindowClass
@@ -89,6 +105,10 @@ namespace Opal
 		static PFNGLDELETEBUFFERSPROC glDeleteBuffers;
 		static PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 		static PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+		static PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+		static PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+		static PFNGLGETSHADERIVPROC glGetShaderiv;
+		static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
 	};//OpenGL函数加载器
 	class OPAL_API OpalWindow
 	{

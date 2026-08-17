@@ -7,9 +7,10 @@
 #include"Opal/Log.h"
 
 #include"src/UI.h"
+#include"src/Renderer.h"
 namespace Opal
 {
-	class GuiLayer : public Layer
+	class OPAL_API GuiLayer : public Layer
 	{
 	public:
 		GuiLayer();
@@ -17,6 +18,7 @@ namespace Opal
 
 		virtual void OnAttach() override;
 		virtual void OnUpdate() override; 
+		virtual void OnDetach() override;
 		virtual void OnEvent(Event& e) override;
 
 	private:
