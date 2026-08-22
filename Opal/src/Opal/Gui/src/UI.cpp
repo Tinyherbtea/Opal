@@ -1,75 +1,155 @@
 #include"opalpch.h"
 #include"UI.h"
-
-static int point_in_rect(vec2 point,Rect rect)
+#include"Renderer.h"
+void Opal::VM_Execute(OIcode* code, float* stack, int* top, void * input_data)
 {
-    return point.x >= rect.x && point.x <= rect.x + rect.w &&
-		point.y >= rect.y && point.y <= rect.y + rect.h;
-}
+    bool should_execute = false;
+    if (code->trigger_len > 0) {
+        int temp_top = *top; 
 
-void ui_push_rect_cmd(context* ctx, Rect rect, unsigned int color) {
-    if (ctx->command_count < MAX_COMMANDS) {
-        command* cmd = &ctx->commands[ctx->command_count++];
-        cmd->type = 0; // UI_CMD_RECT
-        cmd->rect = rect;
-        cmd->color = color;
+        uint8_t* bc = code->trigger_bc;
+        for (uint8_t i = 0; i < code->trigger_len; ) {
+            uint8_t op = bc[i++];
+            switch (op) {
+            case OP_GET_VAL_OFFSET: 
+            {
+                uint8_t offset = bc[i++]; 
+                if (input_data) 
+                {
+                    float val = *(float*)((uint8_t*)input_data + offset);
+                    stack[++(*top)] = val;
+                }
+                else
+                {
+                    stack[++(*top)] = 0.0f; 
+                }
+                break;
+            }
+            //所有操作均为a对b
+            case OP_GT: 
+            {
+                float b = stack[(*top)--]; 
+                float a = stack[(*top)--]; 
+                stack[++(*top)] = (a > b) ? 1.0f : 0.0f;
+                break;
+            }
+            case OP_EQ:
+            {
+                float b = stack[(*top)--];
+                float a = stack[(*top)--];
+                stack[++(*top)] = (a == b) ? 1.0f : 0.0f;
+                break;
+            }
+
+            case OP_LT: 
+            {
+                float b = stack[(*top)--]; 
+                float a = stack[(*top)--]; 
+                stack[++(*top)] = (a < b) ? 1.0f : 0.0f;
+                break;
+            }
+            case OP_AND: 
+            {
+                float b = stack[(*top)--];
+                float a = stack[(*top)--];
+                bool res = (a > BOOL_THRESHOLD) && (b > BOOL_THRESHOLD);
+                stack[++(*top)] = res ? 1.0f : 0.0f;
+                break;
+            }
+            case OP_OR: 
+            {
+                float b = stack[(*top)--];
+                float a = stack[(*top)--];
+                bool res = (a > BOOL_THRESHOLD) || (b > BOOL_THRESHOLD);
+                stack[++(*top)] = res ? 1.0f : 0.0f;
+                break;
+            }
+            }
+        }
+        should_execute = (stack[temp_top] > BOOL_THRESHOLD);
+    }
+    else {
+        should_execute = true; 
+    }
+    if (should_execute) {
+        uint8_t* bc = code->bytecode;
+        for (uint8_t i = 0; i < code->bc_len; ) {
+            uint8_t op = bc[i++];
+            switch (op) {
+            case OP_GET_VAL_OFFSET: {
+                uint8_t offset = bc[i++];
+                if (input_data) {
+                    float val = *(float*)((uint8_t*)code->data + offset);
+                    stack[++(*top)] = val;
+                }
+                else {
+                    stack[++(*top)] = 0.0f;
+                }
+                break;
+            }
+            case OP_PUSH_IMM_F32: {
+                float imm;
+                memcpy(&imm, &bc[i], sizeof(float));
+                i += sizeof(float);
+                stack[++(*top)] = imm;
+                break;
+            }
+            case OP_ADD: {
+                float b = stack[(*top)--];
+                float a = stack[(*top)--];
+                stack[++(*top)] = a + b;
+                break;
+            }
+            case OP_WRITE_OFFSET: {
+                uint8_t offset = bc[i++];
+                if (code->data && *top >= 0) {
+                    float val = stack[(*top)--];
+                    *(float*)((uint8_t*)code->data + offset) = val;
+                }
+                break;
+            }
+            case OP_SUB: {
+                if (*top >= 1) {
+                    float b = stack[(*top)--];
+                    float a = stack[(*top)--];
+                    stack[++(*top)] = a - b;
+                }
+                break;
+            }
+            case OP_JUMP_IF_FALSE: {
+                uint8_t jump_offset = bc[i++]; // 读取要跳过的字节数
+                if (*top >= 0 && stack[(*top)--] <= BOOL_THRESHOLD) {
+                    i += jump_offset; // 如果条件为假，直接跳过指定长度的字节码
+                }
+                break;
+            }
+            }
+        }
     }
 }
-#define HASH_INITIAL 2166136261
-static void hash(id* hash, const void* data, int size)
+
+void Opal::DeclareCard(Context* ctx, OIcode* logic, RenderCommand* visual,void* input_data)
 {
-    const unsigned char* p = (const unsigned char*)data;
-    while (size--)
+    if (logic)
     {
-        *hash = (*hash ^ *p++) * 16777619;
+        VM_Execute(logic, ctx->vm_stack, &ctx->vm_top, input_data);
+    }
+
+    if (ctx->cmd_count < MAX_RENDER_CMDS) 
+    {
+        ctx->render_pool[ctx->cmd_count++] = *visual;
     }
 }
-static id get_id(context* ctx, const char* str) {
-    id id = HASH_INITIAL;
-    hash(&id, str, (int)strlen(str));
-    return id;
-}
 
-void ui_begin(context* ctx) 
+void Opal::ui_begin(Context* ctx)
 {
-    ctx->hover_id = 0;
-    ctx->command_count = 0;
+	ctx->cmd_count = 0;
+    ctx->vm_top = -1;
 }
-void ui_end(context* ctx)
+void Opal::ui_end(Context* ctx)
 {
-
-}
-int ui_button(context* ctx,int x, int y, int w, int h, const char* text)
-{
-    id id = get_id(ctx, text);
-	Rect rect = { x, y, w, h };
-    int mouse_over = point_in_rect(ctx->mousepos,rect);
-    int clicked = 0;
-
-    if (mouse_over && !ctx->mousedown) {
-        ctx->hover_id = id;
-    }
-
-    // 2. 更新 Focus 状态 (按下)
-    if (mouse_over && ctx->mousepress) {
-        ctx->focus_id = id;
-    }
-
-    // 3. 判断有效点击 (拥有焦点 且 鼠标松开)
-    if (ctx->focus_id == id && !ctx->mousedown) {
-        clicked = 1;
-        ctx->focus_id = 0; // 释放焦点
-    }
-
-    // 4. 生成绘制命令 (为渲染模块准备)
-    unsigned int color = 0x333333FF; // 默认深灰色
-    if (ctx->focus_id == id) {
-        color = 0x555555FF; // 按下状态：亮一点
-    }
-    else if (ctx->hover_id == id) {
-        color = 0x444444FF; // 悬停状态：稍微亮一点
-    }
-    ui_push_rect_cmd(ctx,rect, color);
-
-    return clicked;
+    int width = 960;
+    int height = 540;
+    Renderer::RenderCommands(ctx->render_pool, ctx->cmd_count, width, height);
+    ctx->vm_top = -1;
 }

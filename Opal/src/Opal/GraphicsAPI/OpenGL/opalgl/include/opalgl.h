@@ -36,6 +36,8 @@
 #define GL_VERTEX_SHADER   0x8B31
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_INFO_LOG_LENGTH 0x8B84
+#define GL_STATIC_DRAW 0x88E4
+#define GL_ELEMENT_ARRAY_BUFFER 0x8893
 
 #define GL_VERTEX_SHADER              0x8B31
 #define GL_FRAGMENT_SHADER            0x8B30
@@ -71,6 +73,10 @@ namespace Opal
 	typedef void (*PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint* arrays);
 	typedef void (*PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint* params);
 	typedef void (*PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
+	typedef void (*PFNGLDRAWELEMENTSINSTANCEDPROC) (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount);
+	typedef void(*PFNGLUNIFORM2FPROC) (GLint location, GLfloat v0, GLfloat v1);
+	typedef void (*PFNGLVERTEXATTRIBDIVISORPROC) (GLuint index, GLuint divisor);
+	typedef void (*PFNGLVERTEXATTRIBIPOINTERPROC) (GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer);
 	//窗口过程函数声明
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	class OPAL_API OpalWindowClass
@@ -109,6 +115,10 @@ namespace Opal
 		static PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
 		static PFNGLGETSHADERIVPROC glGetShaderiv;
 		static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+		static PFNGLUNIFORM2FPROC glUniform2f;
+		static PFNGLDRAWELEMENTSINSTANCEDPROC glDrawElementsInstanced;
+		static PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
+		static PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer;
 	};//OpenGL函数加载器
 	class OPAL_API OpalWindow
 	{

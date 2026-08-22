@@ -4,34 +4,59 @@
 #include "Opal/GraphicsAPI/OpenGL/opalgl/include/opalgl.h" // 你的 OpenGL 头文件
 
 namespace Opal {
-    static unsigned int s_ShaderProgram = 0;
-    static unsigned int s_VAO = 0, s_VBO = 0;
-
-    // 极其简单的顶点着色器
-    const char* s_VertexShader = R"(
+    const char* s_VertexShaderSrc = R"(
         #version 460 core
-        layout (location = 0) in vec2 aPos;
+        
+        // 固定的单位矩形顶点 (1x1)
+        layout(location = 0) in vec2 a_Pos; 
+
+        // 每个实例独有的数据 (从 Instance VBO 读取)
+        layout(location = 1) in vec4 a_Rect;   // x, y, w, h
+        layout(location = 2) in uint a_Color;  // RGBA
+
+        out vec4 v_Color;
+        uniform vec2 u_WindowSize;
+
         void main() {
-            gl_Position = vec4(aPos, 0.0, 1.0);
+            // 将 1x1 的单位矩形，根据实例数据拉伸到实际大小
+            vec2 finalPos = a_Pos * a_Rect.zw + a_Rect.xy;
+            
+            // 像素坐标转 NDC (-1.0 ~ 1.0)
+            float ndcX = (finalPos.x / u_WindowSize.x) * 2.0 - 1.0;
+            float ndcY = 1.0 - (finalPos.y / u_WindowSize.y) * 2.0; // Y轴翻转
+            
+            gl_Position = vec4(ndcX, ndcY, 0.0, 1.0);
+            
+            // 将 uint32 颜色解包为 vec4
+            v_Color = vec4(
+                float((a_Color >> 24) & 0xFF) / 255.0,
+                float((a_Color >> 16) & 0xFF) / 255.0,
+                float((a_Color >> 8) & 0xFF) / 255.0,
+                float(a_Color & 0xFF) / 255.0
+            );
         }
     )";
 
-    // 极其简单的片段着色器
-    const char* s_FragmentShader = R"(
+    // 2. 极简的片段着色器
+    const char* s_FragmentShaderSrc = R"(
         #version 460 core
+        in vec4 v_Color;
         out vec4 FragColor;
-        uniform vec4 u_Color;
         void main() {
-            FragColor = u_Color;
+            FragColor = v_Color;
         }
     )";
+
+    unsigned int Renderer::s_ShaderProgram = 0;
+    unsigned int Renderer::s_QuadVAO = 0;
+    unsigned int Renderer::s_InstanceVBO = 0;
 
     void Renderer::Init() {
         using namespace Opal; // 方便调用 GLFL 里的函数
         OPAL_CORE_INFO("正在检查着色器编译状态...");
         // 1. 编译顶点着色器
         unsigned int vs = GLFL::glCreateShader(GL_VERTEX_SHADER);
-        GLFL::glShaderSource(vs, 1, &s_VertexShader, NULL);
+        GLFL::glShaderSource(vs, 1, &s_VertexShaderSrc, NULL);
         GLFL::glCompileShader(vs);
         int success;
         char infoLog[512];
@@ -42,7 +67,7 @@ namespace Opal {
         }
         // 2. 编译片段着色器
         unsigned int fs = GLFL::glCreateShader(GL_FRAGMENT_SHADER);
-        GLFL::glShaderSource(fs, 1, &s_FragmentShader, NULL);
+        GLFL::glShaderSource(fs, 1, &s_FragmentShaderSrc, NULL);
         GLFL::glCompileShader(fs);
 
         // 3. 链接着色器程序
@@ -55,68 +80,77 @@ namespace Opal {
         GLFL::glDeleteShader(vs);
         GLFL::glDeleteShader(fs);
 
-        // 5. 创建 VAO 和 VBO
-        GLFL::glGenVertexArrays(1, &s_VAO);
-        GLFL::glGenBuffers(1, &s_VBO);
+        float quadVertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f,  0.0f, 1.0f };
+        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 
-        GLFL::glBindVertexArray(s_VAO);
-        GLFL::glBindBuffer(GL_ARRAY_BUFFER, s_VBO);
-        // 预分配内存，提高每帧更新顶点的效率
-        GLFL::glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * 6 * MAX_COMMANDS, nullptr, GL_DYNAMIC_DRAW);
+        unsigned int quadVBO, quadEBO;
+        GLFL::glGenVertexArrays(1, &s_QuadVAO);
+        GLFL::glBindVertexArray(s_QuadVAO);
+
+        GLFL::glGenBuffers(1, &quadVBO);
+        GLFL::glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        GLFL::glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
         GLFL::glEnableVertexAttribArray(0);
         GLFL::glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+        GLFL::glGenBuffers(1, &quadEBO);
+        GLFL::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+        GLFL::glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        // ================= 3. 创建实例化 VBO =================
+        GLFL::glGenBuffers(1, &s_InstanceVBO);
+        GLFL::glBindBuffer(GL_ARRAY_BUFFER, s_InstanceVBO);
+        GLFL::glBufferData(GL_ARRAY_BUFFER, MAX_RENDER_CMDS * sizeof(RenderCommand), nullptr, GL_DYNAMIC_DRAW);
+
+        // 绑定 location=1 (vec4 Rect)
+        GLFL::glEnableVertexAttribArray(1);
+        GLFL::glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(RenderCommand), (void*)0);
+        GLFL::glVertexAttribDivisor(1, 1);
+
+        // 绑定 location=2 (uint Color)
+        GLFL::glEnableVertexAttribArray(2);
+        GLFL::glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, sizeof(RenderCommand), (void*)(4 * sizeof(float)));
+        GLFL::glVertexAttribDivisor(2, 1);
+
         GLFL::glBindVertexArray(0);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     void Renderer::Shutdown() {
-        GLFL::glDeleteVertexArrays(1, &s_VAO);
-        GLFL::glDeleteBuffers(1, &s_VBO);
-        GLFL::glDeleteProgram(s_ShaderProgram);
+        // 1. 删除实例化 VBO
+        if (s_InstanceVBO != 0) {
+            GLFL::glDeleteBuffers(1, &s_InstanceVBO);
+            s_InstanceVBO = 0;
+        }
+
+        // 2. 删除 VAO (这也会连带删除内部的 quadVBO 和 quadEBO)
+        if (s_QuadVAO != 0) {
+            GLFL::glDeleteVertexArrays(1, &s_QuadVAO);
+            s_QuadVAO = 0;
+        }
+
+        // 3. 删除 Shader 程序
+        if (s_ShaderProgram != 0) {
+            GLFL::glDeleteProgram(s_ShaderProgram);
+            s_ShaderProgram = 0;
+        }
     }
 
-    void Renderer::RenderCommands(command* commands, int count, int windowWidth, int windowHeight) {
-        if (count == 0 || windowWidth == 0 || windowHeight == 0) return;
+    void Renderer::RenderCommands(RenderCommand* commands, uint32_t count, int windowWidth, int windowHeight) 
+    {
+        if (count == 0) return;
 
         GLFL::glUseProgram(s_ShaderProgram);
-        GLFL::glBindVertexArray(s_VAO);
+        GLFL::glUniform2f(GLFL::glGetUniformLocation(s_ShaderProgram, "u_WindowSize"),
+            (float)windowWidth, (float)windowHeight);
 
-        int colorLoc = GLFL::glGetUniformLocation(s_ShaderProgram, "u_Color");
-        float winW = (float)windowWidth;
-        float winH = (float)windowHeight;
+        // 【核心动作】：把 CPU 端的 render_pool 一次性拷贝到 GPU 显存
+        GLFL::glBindBuffer(GL_ARRAY_BUFFER, s_InstanceVBO);
+        GLFL::glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(RenderCommand), commands);
 
-        for (int i = 0; i < count; ++i) {
-            const command& cmd = commands[i];
-
-            // 1. 设置颜色 (假设你的颜色是 0xRRGGBBAA 格式)
-        float r = ((cmd.color >> 24) & 0xFF) / 255.0f; // Red   (最高位)
-        float g = ((cmd.color >> 16) & 0xFF) / 255.0f; // Green
-        float b = ((cmd.color >> 8) & 0xFF) / 255.0f;  // Blue
-        float a = (cmd.color & 0xFF) / 255.0f;  
-            GLFL::glUniform4f(colorLoc, r, g, b, a);
-
-            // 2. 将 UI 像素坐标转换为 OpenGL 的 -1.0 ~ 1.0 坐标
-            // 注意：OpenGL 的 Y 轴向上，UI 的 Y 轴向下，所以需要翻转
-            float x1 = (cmd.rect.x / winW) * 2.0f - 1.0f;
-            float y1 = 1.0f - (cmd.rect.y / winH) * 2.0f;
-            float x2 = ((cmd.rect.x + cmd.rect.w) / winW) * 2.0f - 1.0f;
-            float y2 = 1.0f - ((cmd.rect.y + cmd.rect.h) / winH) * 2.0f;
-
-            // 3. 构造两个三角形（6个顶点）
-            float vertices[] = {
-                x1, y1, // 左下
-                x2, y1, // 右下
-                x2, y2, // 右上
-                x1, y1, // 左下
-                x2, y2, // 右上
-                x1, y2  // 左上
-            };
-
-            // 4. 更新 VBO 并绘制
-            GLFL::glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-            glDrawArrays(GL_TRIANGLES, 0, 6); // glDrawArrays 是 OpenGL 1.0 就有的，不需要手动加载
-        }
+        // 绑定 VAO 并执行实例化绘制
+        GLFL::glBindVertexArray(s_QuadVAO);
+        // 画 6 个顶点 (2个三角形)，总共画 count 个实例！
+        GLFL::glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, count);
 
         GLFL::glBindVertexArray(0);
         GLFL::glUseProgram(0);

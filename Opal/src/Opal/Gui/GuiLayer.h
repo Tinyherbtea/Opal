@@ -22,7 +22,7 @@ namespace Opal
 		virtual void OnEvent(Event& e) override;
 
 	private:
-		context ui_context;
+		Context ui_context;
 
 		bool OnMouseMoved(MouseMovedEvent& e);
 		bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
